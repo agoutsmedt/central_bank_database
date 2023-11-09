@@ -7,6 +7,7 @@ if(! "pacman" %in% installed.packages()){
 pacman::p_load(tidyverse,
                rvest,
                RSelenium,
+               polite,
                glue,
                here,
                arrow,

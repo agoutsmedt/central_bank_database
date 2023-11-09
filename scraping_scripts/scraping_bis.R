@@ -7,10 +7,10 @@ source("packages_and_data_path.R")
 ## BIS website path----
 bis_website_path <- "https://www.bis.org/"
 cbspeeches_path <- paste0(bis_website_path, 
-                          "cbspeeches/index.htm?cbspeeches_page_length=25")
+                          "cbspeeches/index.htm")
 
-"https://www.bis.org/cbspeeches/index.htm?cbspeeches_page_length=25&fromDate=16%2F05%2F2022"
-"https://www.bis.org/cbspeeches/index.htm?fromDate=16%2F05%2F2022&cbspeeches_page=1&cbspeeches_page_length=25"
+# Using Polite package to introduce to the host and have information about scraping possibilities
+session <- bow(cbspeeches_path)
 
 ## Scrapping metadata----
 
@@ -31,7 +31,7 @@ data <- readRDS(here(bis_data_path,
 if(is.data.frame(data) == FALSE){
   # This is the url to use if you start from scratch. It is registered as an expression that you will have to 
   # evaluate below by specifying the page number i in a loop (see below)
-  scraping_path <- expr(glue("https://www.bis.org/cbspeeches/index.htm?cbspeeches_page={i}&cbspeeches_page_length=25"))
+  scraping_path <- expr(glue("{cbspeeches_path}?cbspeeches_page={i}&cbspeeches_page_length=25"))
 } else{
 # If the data already exists, we search for the date of the last speeches we have downloaded
 last_date <- data %>% 
@@ -73,7 +73,8 @@ nb_pages <- remote_driver$findElement("css selector", ".pageof")$getElementText(
 # Loop which depends on the pages we want to scrap on "https://www.bis.org/doclist/cbspeeches.htm"
 for(i in 1:nb_pages){
   remote_driver$navigate(eval(scraping_path))
-  Sys.sleep(2)
+  nod <- nod(session, eval(scraping_path)) # introducing to the new page
+  Sys.sleep(session$delay)
   for(j in 1:25){
     # We extract the date, the title, the description and the author of the speeches
   metadata[[paste0(i, "-", j)]] <- remote_driver$findElement("css selector", glue("tr.item:nth-child({j})"))$getElementText()[[1]] %>% 
@@ -146,9 +147,9 @@ pdf_to_download <- data_cleaned %>%
 # Sometimes, pdf are missing and we don't want the "walk" to stop for this reason 
 tryCatch(
    {
-     walk(pdf_to_download, ~slow_download(url = glue("https://www.bis.org/review/{.}.pdf"),
-                                       destfile = glue("{bis_data_path}/raw_data/pdf/{.}.pdf"),
-                                       sleep_time = 1))
+     walk(pdf_to_download, ~polite_download("https://www.bis.org/",
+                                            glue("review/{.}.pdf"),
+                                            path = here(bis_data_path, "raw_data", "pdf")))
    },
    error = function(e) {
      print(glue("No pdf exist"))
@@ -266,3 +267,4 @@ write_parquet(bis_text_completed,
               here(bis_data_path,
                    glue("speeches_text_{str_remove_all(Sys.Date(), \"-\")}.parquet")),
               compression = "brotli")
+

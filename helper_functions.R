@@ -7,6 +7,13 @@ slow_download <- function(url, destfile, sleep_time){
   Sys.sleep(sleep_time)
 }
 
+# Another variant with the polite package that allows ethical scraping
+polite_download <- function(domain, url, ...){
+  bow(domain) %>% 
+    nod(glue(url)) %>% 
+    rip(...)  
+}
+
 # Function to clean bis metadata 
 
 cleaning_bis_metadata <- function(data){
