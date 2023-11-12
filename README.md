@@ -18,3 +18,7 @@ This script allows you to scrap the speeches published on the [Bank of Internati
 ## Cleaning scripts
 
 Here are all the scripts to clean the data scraped and to merge them to build one big database of central banks communication.
+
+## Helper scripts
+
+This directory gathers a script of `helper_functions.R` used in various scripts. It also gathers some background scripts used for longer operation: it launches the script as a background job, notably for downloading pdf or running OCR, to avoid waiting for the end of the operation that can take hour. As we don't want to overload website by too many requests, we use slow downloading, making background jobs necessary.

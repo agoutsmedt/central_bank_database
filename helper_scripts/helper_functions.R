@@ -9,14 +9,21 @@ slow_download <- function(url, destfile, sleep_time){
 
 # Another variant with the polite package that allows ethical scraping
 polite_download <- function(domain, url, ...){
-  bow(domain) %>% 
-    nod(glue(url)) %>% 
-    rip(...)  
+  tryCatch(
+    {
+      bow(domain) %>% 
+        nod(glue(url)) %>% 
+        rip(...)  
+    },
+    error = function(e) {
+      print(glue("No pdf exist"))
+    }
+  )
 }
 
 # Function to clean bis metadata 
 
-cleaning_bis_metadata <- function(data){
+cleaning_bis_speeches_metadata <- function(data){
   data_cleaned <- data %>% 
     mutate(pdf_link = str_replace(url, "htm$", "pdf"),
            file_name = str_extract(pdf_link, "(?<=\\/)r\\d+.+(?=\\.pdf)"),
@@ -141,4 +148,44 @@ extracting_text <- function(file, path) {
                         file = file)
   }
   )
+}
+
+# Function to extract the text of a pdf in a data.frame
+extracting_text_alt <- function(file, path) {
+  tryCatch(
+    {  
+      message(glue("Extracting text from {file}"))
+      text_data <- pdf_text(here(path, file)) %>%
+        as_tibble() %>% 
+        mutate(page = 1:n(),
+               file = file) %>% 
+        rename(text = value)
+    },
+    error = function(e) {
+      print(glue("No pdf exist"))
+      text_data <- tibble(text = NA,
+                          page = 1,
+                          file = file)
+    }
+  )
+}
+
+
+fct_new_doc_ID <- function(ids_doc, bank_id){
+  # this function takes as input :
+  # a vector of numbers (id_doc)
+  # a single string as bank_id (e.g. "BoE")
+  # It adds the bank_ID and the leading zeros to the numbers (to have exactly a numeric of length 6)
+  d_id <- ids_doc %>% as.numeric() %>% formatC(.,width = 6,flag=0) %>% paste0(bank_id,.)
+  return(d_id)
+}
+
+# small function for manipulating url lists for BoE
+make_new_list <- function(x,skip_first=FALSE){
+  # A list constructor for multiple urls
+  # if the option skip_first is TRUE, the first element of the list is skipped.
+  if(skip_first){
+    x <- x[[1]][-1]
+  }
+  return( x %>% list)
 }
