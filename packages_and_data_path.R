@@ -6,6 +6,8 @@ if(! "pacman" %in% installed.packages()){
 
 pacman::p_load(tidyverse,
                data.table,
+               janitor,
+               zip,
                rvest,
                RSelenium,
                polite,
@@ -13,7 +15,9 @@ pacman::p_load(tidyverse,
                here,
                arrow,
                pdftools,
-               tesseract)
+               tesseract,
+               tidyfast,
+               tidytext)
 
 # Data Path----
 
@@ -27,3 +31,4 @@ boe_data_path <- here(data_path, "BoE")
 # Loading functions---
 
 source("helper_scripts/helper_functions.R")
+user_agent <- "polite R package, for https://github.com/agoutsmedt/central_bank_database (aurelien.goutsmedt@uclouvain.be)"

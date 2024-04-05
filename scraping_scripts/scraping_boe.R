@@ -25,7 +25,10 @@ categories_to_scrape <- c("financial-stability-report",
                           "statement",
                           "working-paper",
                           "speech",
-                          "report")
+                          "report",
+                          "inflation-report",
+                          "minutes",
+                          "monetary-policy-summary-and-minutes")
 
 # paths <- read.csv("../paths_for_centralbank_project.csv",sep = ";", skip=3,colClasses = c("character","character")) # the file storing relevant paths.
 # dir.create(paths[2,"path"],recursive = TRUE,showWarnings = FALSE) # making sure the temporary directory exists.
@@ -48,7 +51,8 @@ if(file.exists(f_old_metadata)){
 ### Fetching all the relevant urls on the current sitemap ####
 
 root_url_BoE <- "https://www.bankofengland.co.uk"
-session <- bow(root_url_BoE)
+session <- bow(root_url_BoE,
+               user_agent = user_agent)
 
 # The static link
 root_url_engCB <- session$robotstxt$sitemap$value
@@ -123,9 +127,11 @@ if("old_dt_BoE" %in% ls()){
 }
 
 new_dt_BoE$temp_date <-  character()
+errors <- list()
 
 for(categ in categories_to_scrape){
   for(i in new_dt_BoE[new_scrape == TRUE & category == categ,doc_ID]){ # each page in a given category
+    tryCatch({
     # getting the html
     page <- new_dt_BoE[doc_ID == i, hyperlink] %>% 
       read_html
@@ -191,7 +197,13 @@ for(categ in categories_to_scrape){
     cat(paste("item", which(new_dt_BoE[new_scrape == TRUE & category == categ,doc_ID] %in% i), 
               "in", nrow(new_dt_BoE[new_scrape == TRUE & category == categ]),"done for category", categ),
         file = here(boe_data_path, "how_far_in_metadata.txt"))
-  }
+    
+  }, error = function(e){
+    cat(paste("item", which(new_dt_BoE[new_scrape == TRUE & category == categ,doc_ID] %in% i), 
+              "in", nrow(new_dt_BoE[new_scrape == TRUE & category == categ]),"NOT DONE for category", categ))
+    errors[[i]] <- c(categ, i)
+  })
+  } 
 }
 
 file.remove(here(boe_data_path, "how_far_in_metadata.txt"))
